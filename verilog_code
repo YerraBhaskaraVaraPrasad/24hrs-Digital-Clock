@@ -1,0 +1,124 @@
+`timescale 1ns / 1ps
+module digital_clock(clk,rst,anode,cathode);
+input clk,rst;
+output reg [7:0] anode,cathode;
+reg [25:0]clk1hz=0;
+reg [16:0]clk1khz=0;
+reg [5:0]s=0,m=0;
+reg [4:0]h=0;
+reg [3:0]b0,b1,b2,b3,b4,b5;
+reg [2:0] ref=0;
+reg [3:0]digit;
+
+
+always@(posedge clk)                   //clock generation of 2hz//
+begin
+
+if(clk1hz==49999999) clk1hz<=0;
+else clk1hz<=clk1hz+1;
+end
+
+
+
+always@(posedge clk1hz)               //digital clock generation code
+begin
+if(rst || s==59) s<=0;
+else s<=s+1;
+end
+always@(posedge clk1hz)
+begin
+if(rst || m==59) m<=0;
+else m<=m+1;
+end
+always@(posedge clk1hz)
+begin
+if(rst || h==23) h<=0;
+else h<=h+1;
+end
+
+
+always@(posedge clk1hz)                   //bcd converter//
+begin
+b0<=s%10;
+b1<=s/10;
+b2<=m%10;
+b3<=m/10;
+b4<=h%10;
+b5<=h/10;
+end
+
+
+always@(posedge clk)                      //clock generation
+begin
+if(clk1khz==99999) clk1khz<=0;
+else clk1khz<=clk1khz+1;
+end
+
+
+always@(posedge clk1khz)
+begin
+if(ref==6) ref<=0;
+else ref<=ref+1;
+end
+
+always@(b0 or b1 or b2 or b3 or b4 or b5 or ref)             //intermediate display
+begin
+case(ref)
+0:digit<=b0;
+1:digit<=b1;
+2:digit<=b2;
+3:digit<=b3;
+4:digit<=b4;
+5:digit<=b5;
+default: digit<=0;
+endcase
+end
+
+
+
+always@(digit)                                          //cathode block
+begin
+case(digit)
+0:cathode<=8'b00000010;
+1:cathode<=8'b00111110;
+2:cathode<=8'b00100100;
+3:cathode<=8'b00001100;
+4:cathode<=8'b10011000;
+5:cathode<=8'b01001000;
+6:cathode<=8'b01000000;
+7:cathode<=8'b00011110;
+8:cathode<=8'b00000000;
+9:cathode<=8'b00001000;
+default: cathode<=8'b11111111;
+
+endcase
+end
+
+
+always@(ref)             //anode block
+begin
+case(ref)
+0:anode<=8'b11111110;
+1:anode<=8'b11111101;
+2:anode<=8'b11111011;
+3:anode<=8'b11110111;
+4:anode<=8'b11101111;
+5:anode<=8'b11011111;
+
+default: anode<=8'b11111111;
+endcase
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+endmodule
